@@ -33,18 +33,36 @@ def run_residue_pca(residue_data, feature_names=None):
     loadings = pca.components_ 
     variance_ratio = pca.explained_variance_ratio_.tolist()
     
+    # Calculate Mahalanobis Distance and P-values
+    # Mahalanobis Distance D_M = sqrt( sum( (score_i^2) / lambda_i ) )
+    # degrees of freedom = n_components
+    from scipy.stats import chi2
+    
+    eigenvalues = pca.explained_variance_
+    mahalanobis_sq = np.sum((scores**2) / eigenvalues, axis=1)
+    mahalanobis_dist = np.sqrt(mahalanobis_sq)
+    
+    # P-value from Chi-squared distribution (Right-tailed test)
+    p_values = chi2.sf(mahalanobis_sq, df=n_components)
+    
     results = []
+    # Store per-residue statistics separately or attach to results?
+    # The current 'results' structure is per-PC. We need per-residue stats.
+    # Let's attach them to the return object as parallel arrays.
+    
     for i in range(n_components):
         results.append({
             "pc_index": i + 1,
             "scores": scores[:, i].tolist(),
             "loadings": {name: float(val) for name, val in zip(feature_names, loadings[i])},
-            "success": False # "success" triggers Titration fit in frontend; FALSE triggers Residue view
+            "success": False 
         })
         
     return {
         "results": results,
         "variance_ratio": variance_ratio,
         "residue_nos": residue_nos.tolist(),
-        "feature_names": feature_names
+        "feature_names": feature_names,
+        "mahalanobis_dist": mahalanobis_dist.tolist(),
+        "p_values": p_values.tolist()
     }
