@@ -139,6 +139,12 @@
                             <h2 class="text-xl font-semibold mb-4 text-slate-700">3D Residue Space (PCA)</h2>
                             <div id="pca-3d-plot" class="h-[350px]"></div>
                         </div>
+                        <div class="mt-4 flex justify-end">
+                            <button onclick="exportResultsToExcel(window.currentAnalysisData)"
+                                class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-semibold shadow-lg transition-colors flex items-center">
+                                <span class="mr-2">📊</span> Export to Excel
+                            </button>
+                        </div>
                     </div>
 
                     <!-- Outlier Residues Table -->
@@ -365,6 +371,65 @@
             }
 
             renderKdFits(data);
+
+            // Store data globally for export
+            window.currentAnalysisData = data;
+        }
+
+        function exportResultsToExcel(data) {
+            if (!data) return alert("No analysis data available to export.");
+
+            const wb = XLSX.utils.book_new();
+
+            // 1. Scores Sheet
+            const scoresData = data.residue_nos.map((resNo, idx) => {
+                const s1 = data.results[0].scores[idx];
+                const s2 = data.results[1]?.scores[idx] || 0;
+                const s3 = data.results[2]?.scores[idx] || 0;
+                const m = data.mahalanobis_dist ? data.mahalanobis_dist[idx] : null;
+                const p = data.p_values ? data.p_values[idx] : null;
+                const isOutlier = p !== null && p < 0.05 ? "Yes" : "No";
+
+                return {
+                    "Residue No": resNo,
+                    "PC1 Score": s1,
+                    "PC2 Score": s2,
+                    "PC3 Score": s3,
+                    "Mahalanobis Dist": m,
+                    "P-value": p,
+                    "Outlier (P<0.05)": isOutlier
+                };
+            });
+            const wsScores = XLSX.utils.json_to_sheet(scoresData);
+            XLSX.utils.book_append_sheet(wb, wsScores, "Scores & Outliers");
+
+            // 2. Loadings Sheet
+            // feature_names corresponds to keys in data.results[i].loadings
+            // But checking data structure: data.results[i].loadings is Dict {FeatureName: Val}
+            if (data.feature_names) {
+                const loadingsData = data.feature_names.map(feat => {
+                    const row = { "Feature": feat };
+                    data.results.forEach(res => {
+                        if (res.pc_index <= 3) {
+                            row[`PC${res.pc_index} Loading`] = res.loadings[feat];
+                        }
+                    });
+                    return row;
+                });
+                const wsLoadings = XLSX.utils.json_to_sheet(loadingsData);
+                XLSX.utils.book_append_sheet(wb, wsLoadings, "Loadings");
+            }
+
+            // 3. Variance Sheet
+            const varianceData = data.variance_ratio.map((v, i) => ({
+                "PC Index": i + 1,
+                "Explained Variance": v,
+                "Cumulative Variance": data.variance_ratio.slice(0, i + 1).reduce((a, b) => a + b, 0)
+            }));
+            const wsVar = XLSX.utils.json_to_sheet(varianceData);
+            XLSX.utils.book_append_sheet(wb, wsVar, "Variance");
+
+            XLSX.writeFile(wb, "PPALI_PCA_Results.xlsx");
         }
 
         function renderOutlierTable(data) {
