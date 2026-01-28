@@ -66,6 +66,9 @@
     <div class="max-w-7xl mx-auto">
         <!-- Header -->
         <header class="mb-12 text-center relative">
+            <img id="kbsi-logo"
+                class="absolute top-0 right-0 h-12 w-auto object-contain opacity-90 hover:opacity-100 transition-opacity"
+                alt="KBSI Logo">
             <h1 class="text-5xl font-bold mb-4 gradient-text">PPALI</h1>
             <p class="text-slate-600 text-lg">Peak-based PCA Analysis for Ligand Interactions</p>
         </header>
@@ -248,6 +251,16 @@
 
     <script>
         const API_BASE = window.location.protocol === 'file:' ? 'http://127.0.0.1:8000' : '';
+        
+        // Set KBSI Logo Source
+        const logoImg = document.getElementById('kbsi-logo');
+        if (logoImg) {
+            logoImg.src = `${API_BASE}/logo`;
+            logoImg.onerror = () => {
+                console.warn("KBSI Logo failed to load (Backend might be offline or /logo missing)");
+                logoImg.style.display = 'none';
+            };
+        }
 
         function handleFileUpload(e) {
             const file = e.target.files[0];
