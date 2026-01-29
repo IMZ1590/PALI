@@ -59,6 +59,71 @@
             user-select: none;
             cursor: default;
         }
+
+        .tooltip-container {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            cursor: help;
+        }
+
+        .tooltip-text {
+            visibility: hidden;
+            width: 250px;
+            background-color: #1e293b;
+            color: #f8fafc;
+            text-align: left;
+            border-radius: 8px;
+            padding: 12px;
+            position: absolute;
+            z-index: 50;
+            bottom: 140%;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.2s;
+            font-size: 0.75rem;
+            font-weight: 400;
+            line-height: 1.4;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            pointer-events: none;
+        }
+
+        .tooltip-text::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: #1e293b transparent transparent transparent;
+        }
+
+        .tooltip-container:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .tooltip-icon {
+            margin-left: 8px;
+            color: #94a3b8;
+            background: #f1f5f9;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+
+        .tooltip-container:hover .tooltip-icon {
+            color: #fff;
+            background: #38bdf8;
+        }
     </style>
 </head>
 
@@ -159,7 +224,15 @@
                     <div class="grid grid-cols-2 gap-2">
                         <!-- Variance Plot (PC1-3 Percentile) -->
                         <div class="glass p-6 rounded-2xl min-h-[300px]">
-                            <h2 class="text-xl font-semibold mb-4 text-slate-700">Explained Variance (%)</h2>
+                            <div class="tooltip-container mb-4">
+                                <h2 class="text-xl font-semibold text-slate-700">Explained Variance (%)</h2>
+                                <span class="tooltip-icon">?</span>
+                                <div class="tooltip-text">
+                                    Shows how much information (variance) is captured by each Principal Component.
+                                    High values for PCs suggest the PCA has successfully identified the major trends
+                                    in your data.
+                                </div>
+                            </div>
                             <div id="variance-plot" class="h-[250px]"></div>
                         </div>
                         <!-- 3D Residue Space (Visible only in Picked mode) -->
@@ -177,8 +250,17 @@
 
                     <!-- Loading Contributions (Restored) -->
                     <div id="loading-section" class="glass p-6 rounded-2xl hidden">
-                        <h2 class="text-xl font-semibold mb-4 text-slate-700">Feature Contributions (PCA Loadings)
-                        </h2>
+                        <div class="tooltip-container mb-4">
+                            <h2 class="text-xl font-semibold text-slate-700">Feature Contributions (PCA Loadings)
+                            </h2>
+                            <span class="tooltip-icon">?</span>
+                            <div class="tooltip-text">
+                                Indicates which input features (e.g., chemical shifts or intensities) contributed
+                                most to each PC.
+                                Taller bars mean that specific variable had a stronger influence on the separation seen
+                                in the PCA plot.
+                            </div>
+                        </div>
                         <div id="loading-plots" class="grid grid-cols-3 gap-2">
                             <!-- Plots added dynamically -->
                         </div>
@@ -187,24 +269,35 @@
                     <!-- Outlier Residues Table -->
 
                     <div id="outlier-section" class="glass p-6 rounded-2xl hidden top-6">
-                        <h2 class="text-xl font-semibold mb-4 text-black-600">Outlier Residues (P-value < 0.05)</h2>
-                                <div class="overflow-x-auto">
-                                    <table class="w-full text-sm text-left text-slate-700">
-                                        <thead class="text-xs text-slate-600 bg-slate-50/50">
-                                            <tr>
-                                                <th class="px-4 py-3">Residue No.</th>
-                                                <th class="px-4 py-3 text-center">PC1</th>
-                                                <th class="px-4 py-3 text-center">PC2</th>
-                                                <th class="px-4 py-3 text-center">PC3</th>
-                                                <th class="px-4 py-3 text-center">Mahalanobis</th>
-                                                <th class="px-4 py-3 text-center">p-Value</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="outlier-table-body">
-                                            <!-- Rows added dynamically -->
-                                        </tbody>
-                                    </table>
-                                </div>
+                        <div class="tooltip-container mb-4">
+                            <h2 class="text-xl font-semibold text-black-600">Outlier Residues (Mahalanobis Distance)
+                            </h2>
+                            <span class="tooltip-icon">?</span>
+                            <div class="tooltip-text">
+                                Identifies residues that statistically deviate from the regular cluster.
+                                <strong>Mahalanobis Distance</strong> measures distance from the data center accounting
+                                for correlation.
+                                <strong>p-Value < 0.05</strong> indicates significant outliers.
+                            </div>
+                        </div>
+
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm text-left text-slate-700">
+                                <thead class="text-xs text-slate-600 bg-slate-50/50">
+                                    <tr>
+                                        <th class="px-4 py-3">Residue No.</th>
+                                        <th class="px-4 py-3 text-center">PC1</th>
+                                        <th class="px-4 py-3 text-center">PC2</th>
+                                        <th class="px-4 py-3 text-center">PC3</th>
+                                        <th class="px-4 py-3 text-center">Mahalanobis</th>
+                                        <th class="px-4 py-3 text-center">p-Value</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="outlier-table-body">
+                                    <!-- Rows added dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
 
                     <!-- PDB Structure Viewer (Conditional) -->
@@ -233,10 +326,11 @@
                                 <div class="text-xs text-slate-500 bg-slate-100 p-3 rounded-lg">
                                     <p class="font-semibold mb-1">Color Legend:</p>
                                     <div class="flex items-center mb-1"><span
-                                            class="w-3 h-3 bg-red-500 rounded-full mr-2"></span> Outliers (Red)</div>
+                                            class="w-3 h-3 bg-rose-500 rounded-full mr-2"></span> Outliers (Red)</div>
                                     <div class="flex items-center"><span
-                                            class="w-3 h-3 bg-gray-300 rounded-full mr-2"></span> Others (Gray)</div>
+                                            class="w-3 h-3 bg-slate-300 rounded-full mr-2"></span> Others (Gray)</div>
                                 </div>
+
                             </div>
                             <!-- Viewer Container -->
                             <div class="lg:col-span-3 flex flex-col space-y-2">
@@ -908,86 +1002,110 @@
         // Global variable for offset calculation
         let firstResidueNo = 1;
 
+        function reapplyColoring() {
+            if (stage && stage.compList.length > 0) {
+                applyOutlierColoring(stage.compList[0]);
+            }
+        }
+
         function applyOutlierColoring(component) {
             if (!component) return;
+
+            // --- Renumbering Logic ---
+            // Goal: Shift PDB residue numbers so they match the CSV numbering.
+            // Example: CSV starts at 86. PDB starts at 1. We start PDB at 86.
+
+            // 1. Determine CSV Start
+            let csvStart = 1; // Default
+            if (window.currentAnalysisData && window.currentAnalysisData.residue_nos && window.currentAnalysisData.residue_nos.length > 0) {
+                const parsed = parseInt(window.currentAnalysisData.residue_nos[0]);
+                if (!isNaN(parsed)) csvStart = parsed;
+            }
+
+            // 2. Determine PDB Original Start (Only once)
+            if (typeof component.originalStart === 'undefined') {
+                // Find the first residue number in the structure
+                let firstRes = null;
+                component.structure.eachResidue(function (rp) {
+                    if (firstRes === null) firstRes = rp.resno;
+                });
+                component.originalStart = (firstRes !== null) ? firstRes : 1;
+                component.currentShift = 0;
+            }
+
+            // 3. Calculate Needed Shift
+            // We want: (OriginalPDB + Shift) = CSV_Start
+            // But wait, we want the FIRST PDB residue to align with FIRST CSV residue.
+            // So: component.originalStart + TotalShift = csvStart
+            // TotalShift = csvStart - component.originalStart
+            const totalNeededShift = csvStart - component.originalStart;
+
+            // 4. Apply Incremental Shift
+            const incrementalShift = totalNeededShift - component.currentShift;
+
+            if (incrementalShift !== 0) {
+                console.log(`Renumbering PDB: Shift ${incrementalShift} (Total: ${totalNeededShift}). Aligning PDB ${component.originalStart} to CSV ${csvStart}`);
+                component.structure.eachResidue(function (rp) {
+                    rp.resno += incrementalShift;
+                });
+                // Update tracking
+                component.currentShift = totalNeededShift;
+
+                // NGL might need notification to update spatial index / internal arrays?
+                // Usually direct prop mod works for labelling, but for selection it helps to clear cache if any.
+                // component.structure.spatialHash = null; // Sometimes needed, but try without first.
+            }
 
             // Remove previous reps
             component.removeAllRepresentations();
 
-            // Mapping Logic: CSV First Residue -> PDB Residue 1
-            // PDB indices often start at 1, but the "Residue Number" in the PDB file 
-            // might match our data. NGL selection by number uses the PDB's residue index.
-            // Wait, NGL selection '10' usually means residue Number 10 as defined in the PDB file.
-            // The logic in PCA_PEAK_PICKED calculates an offset:
-            // const offset = 1 - (firstResidueNo || 1);
-            // This suggests it's trying to align the first data point to the first residue physically present in the PDB?
-            // Actually, let's copy the logic exactly as requested.
-
-            const offset = 1 - (firstResidueNo || 1);
-
+            // --- Selection Logic ---
+            // Now that PDB is renumbered to match CSV, we can use currentOutliers directly!
             let selectionString = "";
             let schemeId = "uniform";
 
             if (currentOutliers && currentOutliers.length > 0) {
-                selectionString = currentOutliers.map(r => {
-                    // Try to map based on the logic from PCA_PEAK_PICKED
-                    // If the user's data says "Res 86", and that is the FIRST residue,
-                    // and the PDB starts at index 1...
-                    // The logic `parseInt(r) + offset` with `offset = 1 - 86` would result in `-85` + `86` = 1?
-                    // This assumes the PDB file is re-indexed from 1. 
-                    // Let's stick to the reference implementation from PCA_PEAK_PICKED.
-
-                    const mappedRes = parseInt(r) + offset;
-                    return mappedRes;
-                }).join(" or ");
+                selectionString = currentOutliers.join(" or ");
+                console.log("Selection String (Direct):", selectionString);
             }
 
             if (selectionString) {
-                // Convert to 1-Letter Code for Outliers logic
-                // Requires AA_MAP which might be missing. let's check if it is defined. 
-                // It is not defined in the snippet I saw. 
-                // Wait, looking at PCA_PEAK_PICKED again... line 920: if (AA_MAP[upper])
-                // Ensure AA_MAP is defined.
-
-                const AA_MAP = {
-                    "ALA": "A", "ARG": "R", "ASN": "N", "ASP": "D", "CYS": "C",
-                    "GLU": "E", "GLN": "Q", "GLY": "G", "HIS": "H", "ILE": "I",
-                    "LEU": "L", "LYS": "K", "MET": "M", "PHE": "F", "PRO": "P",
-                    "SER": "S", "THR": "T", "TRP": "W", "TYR": "Y", "VAL": "V"
-                };
-
-                const selectionObj = new NGL.Selection(selectionString);
-
-                // Safety check: iterate only if selection is valid
-                try {
-                    component.structure.eachResidue(function (rp) {
-                        const upper = rp.resname.toUpperCase();
-                        if (AA_MAP[upper]) {
-                            rp.resname = AA_MAP[upper];
-                        }
-                    }, selectionObj);
-                } catch (e) { console.warn("Error remapping residue names", e); }
-
-                // Create Scheme
+                // NGL Scheme
                 schemeId = NGL.ColormakerRegistry.addSelectionScheme([
-                    ["red", selectionString],
-                    ["lightgray", "*"]
+                    ["#fb7185", selectionString],
+                    ["#e2e8f0", "*"]
                 ], "outlierScheme_" + Math.random());
 
+                // Cartoon
                 component.addRepresentation("cartoon", { color: schemeId });
 
-                // Labels for Outliers
+                // Spacefill
+                component.addRepresentation("spacefill", {
+                    sele: `(${selectionString}) and .CA`,
+                    color: "#fb7185",
+                    radius: 1.5,
+                    opacity: 0.6
+                });
+
+                // Labels (Will now show the Shifted/CSV number!)
                 component.addRepresentation("label", {
-                    sele: "(" + selectionString + ") and .CA",
+                    sele: `(${selectionString}) and .CA`,
                     color: "black",
                     scale: 2.0,
                     labelType: "format",
-                    labelFormat: "%(resname)s%(resno)s"
+                    labelFormat: "%(resname)s %(resno)s",
+                    zOffset: 1.5,
+                    fixedSize: true,
+                    showBackground: true,
+                    backgroundColor: "white",
+                    backgroundOpacity: 0.7
                 });
 
             } else {
                 component.addRepresentation("cartoon", { color: "lightgray" });
             }
+
+            component.autoView();
         }
 
 
